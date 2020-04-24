@@ -87,7 +87,7 @@ module.exports.index_secret = (event, context, callback) => {
         callback(null,{
             "statusCode": 404,
             "headers": {"content-type": "text/html"},
-            "body": body.replace('SECRET_PLACEHOLDER', '')
+            "body": body.replace('SECRET_PLACEHOLDER', 'false')
         });
     });
 
