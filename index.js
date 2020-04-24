@@ -9,7 +9,8 @@ module.exports.get = (event, context, callback) => {
     .then((payload) => {
         callback(null,{
             "statusCode": 200,
-            "body": payload
+            "headers": {"content-type": "application/json"},
+            "body": JSON.stringify(payload)
         });
     })
     .catch((err) => {
@@ -26,6 +27,7 @@ module.exports.create = (event, context, callback) => {
     .then((res) => {
         callback(null,{
             "statusCode": 200,
+            "headers": {"content-type": "application/json"},
             "body": '{"status":"ok","uuid":"'+res+'"}'
         });
     })
