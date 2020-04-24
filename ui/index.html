@@ -7,170 +7,76 @@
         <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" integrity="sha384-xewr6kSkq3dBbEtB6Z/3oFZmknWn7nHqhLVLrYgzEFRbU/DHSxW7K3B44yWUN60D" crossorigin="anonymous">
 
         </head>
-        <h1>self-destruct-o</h1>
-        <h2>Create a new secret</h2>
-        <form action="#">
-            New secret:<br>
-            <textarea id=newSecret rows=20 cols=100></textarea> <br>
-            Optional passphrase: (will be required for decryption) <input type=text id=newpassphrase><Br>
-            <input type='button' value='Create a new secret' id="newSecretBtn" />            <input type=reset>
+        <h1>Self-destructing message</h1>
 
-        </form>
-        <h2>Retrieve a secret</h2>
-        <form action="#">
-            Enter secret UUID:<br>
-            <input type=text id=getSecret><br>
-            Optional passphrase: (required if one was used for encrypting) <input type=text id=getpassphrase><Br>
-            <input type='button' value='Retrieve a secret' id="getSecretBtn" />
-            <input type=reset>
-        </form>
-        <div id=newSecretDialog title="New secret">
-            <div id="newSecretUuid"></div>
-            <div id="newSecretUrl"></div>
-            <button id="copySecretUrl">Copy URL</button>
-            <div>Note: You can only visit the secret URL once, after which the secret is deleted.</div>
-        </div>
-        <div id=getSecretDialog title="Secret retrieved">
-            <div id="newSecretUrl"></div>
-            <div id="secretText"></div>
-            <button id="copySecret">Copy Secret</button>
-        </div>
-        <h2>Notes</h2>
-        <p>If you provide a passphrase when creating a secret, the data will be encrypted with AES-256 in CBC mode in your browser prior to being sent to the server. This is the most secure mode, as the server will never see the passphrase.</p>
-        <h2>About</h2>
-        <p>Author: Mark Steele (mark@control-alt-del.org)</p>
-        <p>The code for Self-destruct-o can be found <a href="https://github.com/marksteele/self-destruct-o">here</a></p>
-        <p>Blog post about <a href="https://www.control-alt-del.org/post/one-time-password-sharing-securely/">Self-destruct-o</a></p>
+        Privately send a secret message. It will be destroyed once it is read. <br> <br>
+
+        <textarea id="secret_text" rows="20" cols="100" placeholder="Write a secret message..."></textarea>
+
+        <br> <br>
+
+        Additional privacy:
+        <table>
+            <tr><td align="right">Passphrase (optional):</td><td align="left"><input type="text" id="passphrase" placeholder="Secret passphrase..."></td></tr>
+            <tr><td align="right">Max lifetime:</td><td align="left"><select id="ttl">
+                <option value="604800" selected="">7 days</option>
+                <option value="259200">3 days</option>
+                <option value="86400">1 day</option>
+                <option value="43200">12 hours</option>
+                <option value="14400">4 hours</option>
+                <option value="3600">1 hour</option>
+                <option value="1800">30 minutes</option>
+                <option value="300">5 minutes</option>
+              </select></td></tr>
+        </table>
+        <br><br>
+        <input type='button' value='Send this secret message!' id="create_secret_btn" /> <br><br>
 
         <script language="javascript" type="text/javascript">
             const keySize = 256;
-            const ivSize = 128;
             const iterations = 100;
 
             function encrypt (msg, pass) {
-                const salt = CryptoJS.lib.WordArray.random(128/8);           
+                const salt = CryptoJS.lib.WordArray.random(128/8);
                 const key = CryptoJS.PBKDF2(pass, salt, {
                     keySize: keySize/32,
                     iterations: iterations
                 });
 
                 var iv = CryptoJS.lib.WordArray.random(128/8);
-                
-                var encrypted = CryptoJS.AES.encrypt(msg, key, { 
-                    iv: iv, 
+
+                var encrypted = CryptoJS.AES.encrypt(msg, key, {
+                    iv: iv,
                     padding: CryptoJS.pad.Pkcs7,
                     mode: CryptoJS.mode.CBC
-                    
+
                 });
-                
-                // salt, iv will be hex 32 in length
-                // append them to the ciphertext for use  in decryption
+
                 var transitmessage = salt.toString()+ iv.toString() + encrypted.toString();
                 return transitmessage;
             }
 
-            function decrypt (transitmessage, pass) {
-                var salt = CryptoJS.enc.Hex.parse(transitmessage.substr(0, 32));
-                var iv = CryptoJS.enc.Hex.parse(transitmessage.substr(32, 32))
-                var encrypted = transitmessage.substring(64);           
-                var key = CryptoJS.PBKDF2(pass, salt, {
-                    keySize: keySize/32,
-                    iterations: iterations
-                    });
-
-                var decrypted = CryptoJS.AES.decrypt(encrypted, key, { 
-                    iv: iv, 
-                    padding: CryptoJS.pad.Pkcs7,
-                    mode: CryptoJS.mode.CBC
-                    
-                })
-                return decrypted.toString(CryptoJS.enc.Utf8);
-            }
-
-            const APIUrl = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '')+window.location.pathname;
-            $('#newSecretBtn').click( function() {
-                var req = {
-                    "secret": $('#newpassphrase').val() ? 
-                        encrypt($('#newSecret').val(),  $('#newpassphrase').val()) : 
-                        $('#newSecret').val()
-                };
-                $.post(APIUrl, JSON.stringify(req), function(data) {
-                    $('#newSecretUuid').html('Your secret ID is: '+data.uuid);
-                    $('#newSecret').val('');
-                    $('#newpassphrase').val('');
-
-                    $('#copySecretUrl').click(function() {
-                        copyTextToClipboard(APIUrl+'?secret='+data.uuid);
-                        $("#newSecretDialog" ).dialog("close");
-                    });
-                    $( "#newSecretDialog" ).dialog("open");
-                });
-            });
-            
-            $('#getSecretBtn').click( function() {
-                if ($('#getSecret').val()) {
-                    $.get(APIUrl+$('#getSecret').val(), function(data) {
-                    $('#getSecret').val('');
-                    $( "#getSecretDialog" ).dialog("open");
-                    const secret = $('#getpassphrase').val() ? 
-                            decrypt(data.secret, $('#getpassphrase').val()) : 
-                            data.secret;
-                    $('#secretText').html(secret);
-                    $('#copySecret').click(function() {
-                        copyTextToClipboard(secret);
-                        $('#getpassphrase').val('');
-                        $( "#getSecretDialog" ).dialog("close");
-                    });
-                    });
-                }
-            });
-
-            function fallbackCopyTextToClipboard(text) {
-                var textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.focus();
-                textArea.select();
-                try {
-                    var successful = document.execCommand('copy');
-                    var msg = successful ? 'successful' : 'unsuccessful';
-                    console.log('Fallback: Copying text command was ' + msg);
-                } catch (err) {
-                    console.error('Fallback: Oops, unable to copy', err);
-                }
-                document.body.removeChild(textArea);
-            }
-            function copyTextToClipboard(text) {
-                if (!navigator.clipboard) {
-                    fallbackCopyTextToClipboard(text);
-                    return;
-                }
-                navigator.clipboard.writeText(text).then(function() {
-                    console.log('Async: Copying to clipboard was successful!');
-                }, function(err) {
-                    console.error('Async: Could not copy text: ', err);
-                });
-            }
-            function getUrlVars() {
-                var vars = {};
-                var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-                    vars[key] = value;
-                });
-                return vars;
-            }
             $(document).ready(function () {
-                $("#newSecretDialog").dialog({
-                    autoOpen : false, modal : true, show : "blind", hide : "blind", width: 600
-                });
-                $("#getSecretDialog").dialog({
-                    autoOpen : false, modal : true, show : "blind", hide : "blind", width: 600
-                });
-                var secret = getUrlVars()['secret'];
-                if (secret !== undefined) {
-                    $('#getSecret').val(secret);
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                $('#create_secret_btn').click( function() {
+                    var passphrase = $('#passphrase').val()
+                    var secret_text = $('#secret_text').val()
 
-                }
+                    var req = {
+                        "secret": passphrase ? encrypt(secret_text, passphrase) : secret_text,
+                        "ttl": parseInt($('#ttl').val()),
+                        "is_e2e": passphrase ? true : false
+                    };
+
+                    $.post(window.location.href + 'api/secret/', JSON.stringify(req), function(data) {
+                        prompt(
+                            'The message has been stored! Share this link with the recipient:',
+                            window.location.href + data.uuid
+                        )
+
+                        //window.location.reload()
+                    });
+                });
+
             });
         </script>
 </html>

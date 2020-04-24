@@ -1,7 +1,7 @@
-service: self-destruct-o
+service: onetime-secret
 provider:
   name: aws
-  runtime: nodejs6.10
+  runtime: nodejs12.x
   stage: ${opt:stage, self:custom.defaultStage}
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
@@ -25,11 +25,11 @@ provider:
 custom:
   defaultStage: dev
   kms_key:
-    "us-east-1":
+    "eu-central-1":
       dev: "foo"
-      prod: ${ssm:/self-destruct-o/kms-key-id~true}
+      prod: ${ssm:/onetime-secret/kms-key-id~true}
 
-resources:  
+resources:
   Resources:
     secretsTable:
       Type: AWS::DynamoDB::Table
@@ -61,18 +61,38 @@ functions:
           path: /
           method: get
           cors: true
+  index-with-secret:
+    optimize:
+      includePaths:
+        - ui/index_secret.html
+    handler: index.index_secret
+    events:
+      - http:
+          path: /{id}
+          method: post
+          cors: true
+  redirect_to_post:
+    optimize:
+      includePaths:
+        - ui/redirect_to_post.html
+    handler: index.redirect_to_post
+    events:
+      - http:
+          path: /{id}
+          method: get
+          cors: true
   create:
     handler: index.create
     events:
       - http:
-          path: /
+          path: /api/secret/
           method: post
           cors: true
   get:
     handler: index.get
     events:
       - http:
-          path: /{id}
+          path: /api/secret/{id}
           method: get
           cors: true
 

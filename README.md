@@ -1,8 +1,8 @@
-# Self-destruct-o
+# Onetime-secret
 
 A serverless service for posting/retrieving secrets that self destruct from the backend on read.
 
-Secrets are stored in DynamoDB with a 7 day TTL.
+Secrets are stored in DynamoDB with a TTL that is defined by the user.
 
 DynamoDB stores the data at rest encrypted via DynamoDB server side encryption.
 
@@ -19,17 +19,15 @@ First, you need to provision a KMS key (which will cost you 1$/month)
 Creating a KMS key:
 
 ```
-aws kms create-key --region us-east-1 --description 'self-destruct-o'
+aws kms create-key --region eu-central-1 --description 'onetime-secret'
 ```
 
-Take note of that KSM key id. 
+Take note of that KSM key id.
 
 Setup a SSM parameter for the key id:
 
 ```
-aws ssm put-parameter --region us-east-1 \
---name "/self-destruct-o/kms-key-id" \
---value "YOURKEYIDHERE" --type SecureString
+aws ssm put-parameter --region eu-central-1 --name "/onetime-secret/kms-key-id" --value "YOURKEYIDHERE" --type SecureString
 ```
 
 Setup dependancies
@@ -42,7 +40,7 @@ npm i
 Deploy the code to AWS. This will create a DynamoDB table, setup the API Gateway endpoint, upload the Lambda.
 
 ```
-sls deploy -s dev --region us-east-1
+sls deploy -s prod --region eu-central-1
 ```
 
 This command should output the three API gateway endpoints. To hit the one with the UI, look for the GET endpoint that doesn't have a parameter.
