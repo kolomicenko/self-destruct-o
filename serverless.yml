@@ -1,7 +1,7 @@
 service: onetime-secret
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
   stage: ${opt:stage, self:custom.defaultStage}
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
@@ -27,7 +27,7 @@ custom:
   kms_key:
     "eu-central-1":
       dev: "foo"
-      prod: ${ssm:/onetime-secret/kms-key-id~true}
+      prod: ${ssm:/onetime-secret/kms-key-id}
 
 resources:
   Resources:
@@ -52,9 +52,6 @@ resources:
 
 functions:
   index:
-    optimize:
-      includePaths:
-        - ui/index.html
     handler: index.index
     events:
       - http:
@@ -62,9 +59,6 @@ functions:
           method: get
           cors: true
   index-with-secret:
-    optimize:
-      includePaths:
-        - ui/index_secret.html
     handler: index.index_secret
     events:
       - http:
@@ -72,9 +66,6 @@ functions:
           method: post
           cors: true
   redirect_to_post:
-    optimize:
-      includePaths:
-        - ui/redirect_to_post.html
     handler: index.redirect_to_post
     events:
       - http:
@@ -96,8 +87,3 @@ functions:
           method: get
           cors: true
 
-plugins:
-  - serverless-plugin-optimize
-
-package:
-  individually: true

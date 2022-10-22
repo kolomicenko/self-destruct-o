@@ -40,12 +40,9 @@ module.exports.create = (event, context, callback) => {
 };
 
 module.exports.index = (event, context, callback) => {
-    const body = fs.readFileSync(path.resolve(
-        process.env.LAMBDA_TASK_ROOT,
-        '_optimize',
-        process.env.AWS_LAMBDA_FUNCTION_NAME,
+    const body = fs.readFileSync(
         "ui/index.html"
-    )).toString()
+    ).toString()
 
     callback(null,{
         "statusCode": 200,
@@ -55,12 +52,9 @@ module.exports.index = (event, context, callback) => {
 };
 
 module.exports.redirect_to_post = (event, context, callback) => {
-    const body = fs.readFileSync(path.resolve(
-        process.env.LAMBDA_TASK_ROOT,
-        '_optimize',
-        process.env.AWS_LAMBDA_FUNCTION_NAME,
+    const body = fs.readFileSync(
         "ui/redirect_to_post.html"
-    )).toString()
+    ).toString()
 
     callback(null,{
         "statusCode": 200,
@@ -70,12 +64,9 @@ module.exports.redirect_to_post = (event, context, callback) => {
 };
 
 module.exports.index_secret = (event, context, callback) => {
-    const body = fs.readFileSync(path.resolve(
-            process.env.LAMBDA_TASK_ROOT,
-            '_optimize',
-            process.env.AWS_LAMBDA_FUNCTION_NAME,
+    const body = fs.readFileSync(
             "ui/index_secret.html"
-        )).toString();
+        ).toString();
 
     encryptor.loadData(event.pathParameters.id)
     .then((secret) => {
