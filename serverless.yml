@@ -1,7 +1,7 @@
 service: onetime-secret
 provider:
   name: aws
-  runtime: nodejs16.x
+  runtime: nodejs20.x
   stage: ${opt:stage, self:custom.defaultStage}
   environment:
     DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
@@ -26,7 +26,7 @@ custom:
   defaultStage: dev
   kms_key:
     "eu-central-1":
-      dev: "foo"
+      dev: ${ssm:/onetime-secret/kms-key-id}
       prod: ${ssm:/onetime-secret/kms-key-id}
 
 resources:
